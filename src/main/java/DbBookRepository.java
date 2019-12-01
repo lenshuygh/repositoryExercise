@@ -6,9 +6,8 @@ public class DbBookRepository implements BookRepository {
     EntityManager entityManager = null;
 
     public DbBookRepository() {
-            entityManagerFactory = Persistence.createEntityManagerFactory("books");
-            entityManager = entityManagerFactory.createEntityManager();
-
+        entityManagerFactory = Persistence.createEntityManagerFactory("books");
+        entityManager = entityManagerFactory.createEntityManager();
     }
 
     @Override
@@ -21,29 +20,39 @@ public class DbBookRepository implements BookRepository {
 
     @Override
     public Book getBookByIsbn(int isbn) {
-        TypedQuery<Book> query = entityManager.createQuery("SELECT b from Book b WHERE  b.isbn = :isbn",Book.class);
-        query.setParameter("isbn",isbn);
-        return query.getSingleResult();
+        TypedQuery<Book> query = entityManager.createQuery("SELECT b from Book b WHERE  b.isbn = :isbn", Book.class);
+        query.setParameter("isbn", isbn);
+        try{
+            return query.getSingleResult();
+        }catch (NoResultException e){
+            System.out.println("No book found with ISBN: " + isbn);
+        }
+        return null;
     }
 
     @Override
     public void removeBook(Book book) {
-        EntityTransaction entityTransaction = entityManager.getTransaction();
-        entityTransaction.begin();
-        entityManager.remove(book);
-        entityTransaction.commit();
+        Book bookToDelete = getBookByIsbn(book.getIsbn());
+        if(bookToDelete != null) {
+            EntityTransaction entityTransaction = entityManager.getTransaction();
+            entityTransaction.begin();
+            entityManager.remove(bookToDelete);
+            entityTransaction.commit();
+        }else{
+            System.out.println("Book not present in DB: " + book);
+        }
     }
 
     @Override
     public List<Book> getBooksByType(BookType type) {
-        TypedQuery<Book> query = entityManager.createQuery("SELECT b from Book b WHERE  b.type = :type",Book.class);
-        query.setParameter("type",type);
+        TypedQuery<Book> query = entityManager.createQuery("SELECT b from Book b WHERE  b.type = :type", Book.class);
+        query.setParameter("type", type);
         return query.getResultList();
     }
 
     @Override
     public List<Book> getAllBooks() {
-        TypedQuery<Book> query = entityManager.createQuery("SELECT b from Book",Book.class);
+        TypedQuery<Book> query = entityManager.createQuery("SELECT b from Book", Book.class);
         return query.getResultList();
     }
 }
